@@ -324,7 +324,7 @@ if (!prefersReducedMotion.matches) {
 }
 
 /* ============================================================
-   KINETIC ENGINE — cursor glow · magnetic · parallax · horizontal portfolio
+   KINETIC ENGINE - cursor glow · magnetic · parallax · horizontal portfolio
    ============================================================ */
 (() => {
   const reduce = prefersReducedMotion.matches;
@@ -498,4 +498,106 @@ if (!prefersReducedMotion.matches) {
   // First word already renders in the markup; hold it, then begin cycling.
   setBlinking(true);
   window.setTimeout(tick, HOLD_FULL);
+})();
+
+/* Testimonials center-stage carousel: auto-advances on an infinite loop while
+   the neighbouring quotes peek in from the sides and fade. */
+(() => {
+  const carousel = document.querySelector(".testimonials-carousel");
+  if (!carousel || prefersReducedMotion.matches) return;
+
+  const slides = Array.from(carousel.querySelectorAll(".testimonial"));
+  const count = slides.length;
+  if (count < 2) return;
+
+  const track = carousel.querySelector(".testimonials-track");
+  const dotsWrap = document.querySelector(".testimonial-dots");
+  const dots = [];
+  const POSITIONS = ["is-active", "is-prev", "is-next", "is-hidden"];
+  const INTERVAL = 4800;
+
+  let active = 0;
+  let timer = null;
+
+  const sizeTrack = () => {
+    const current = slides[active];
+    if (current) track.style.height = `${current.offsetHeight}px`;
+  };
+
+  const render = () => {
+    slides.forEach((slide, i) => {
+      slide.classList.remove(...POSITIONS);
+      const rel = (i - active + count) % count;
+      if (rel === 0) slide.classList.add("is-active");
+      else if (rel === 1) slide.classList.add("is-next");
+      else if (rel === count - 1) slide.classList.add("is-prev");
+      else slide.classList.add("is-hidden");
+    });
+    dots.forEach((dot, i) => {
+      const on = i === active;
+      dot.classList.toggle("is-active", on);
+      dot.setAttribute("aria-selected", on ? "true" : "false");
+      dot.tabIndex = on ? 0 : -1;
+    });
+    requestAnimationFrame(sizeTrack);
+  };
+
+  const goTo = (index) => {
+    active = (index + count) % count;
+    render();
+  };
+  const next = () => goTo(active + 1);
+
+  const stop = () => {
+    if (timer) {
+      window.clearInterval(timer);
+      timer = null;
+    }
+  };
+  const start = () => {
+    stop();
+    timer = window.setInterval(next, INTERVAL);
+  };
+
+  carousel.classList.add("is-carousel");
+
+  // Build the dotted controllers, one per testimonial.
+  if (dotsWrap) {
+    slides.forEach((slide, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "testimonial-dot";
+      dot.setAttribute("role", "tab");
+      const who = slide.querySelector(".testimonial-name");
+      dot.setAttribute("aria-label", who ? who.textContent.trim() : `Testimonial ${i + 1}`);
+      dot.addEventListener("click", () => {
+        goTo(i);
+        start();
+      });
+      dotsWrap.appendChild(dot);
+      dots.push(dot);
+    });
+    dotsWrap.addEventListener("mouseenter", stop);
+    dotsWrap.addEventListener("mouseleave", start);
+    dotsWrap.addEventListener("focusin", stop);
+    dotsWrap.addEventListener("focusout", start);
+  }
+
+  carousel.addEventListener("mouseenter", stop);
+  carousel.addEventListener("mouseleave", start);
+  carousel.addEventListener("focusin", stop);
+  carousel.addEventListener("focusout", start);
+
+  let resizeRAF = null;
+  window.addEventListener("resize", () => {
+    if (resizeRAF) cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(sizeTrack);
+  });
+
+  render();
+  window.setTimeout(sizeTrack, 250);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(sizeTrack);
+  }
+  start();
 })();
