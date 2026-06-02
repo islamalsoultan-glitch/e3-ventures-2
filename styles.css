@@ -989,7 +989,7 @@ body.motion-ready .portfolio-track { animation: marquee 44s linear infinite; }
   display: flex;
   justify-content: center;
 }
-.acceleration-chart-svg { width: 100%; max-width: 520px; height: auto; }
+.acceleration-chart-svg { width: 100%; max-width: 480px; height: auto; }
 
 /* chart animations */
 .wave-path { stroke-dasharray: 720; }
@@ -1006,18 +1006,6 @@ body.motion-ready .accelerator-panel.is-visible .wave-path-2 { animation: waveDr
 body.motion-ready .accelerator-panel.is-visible .wave-path-3 { animation: waveDraw 1.7s 0.55s var(--ease) forwards; }
 body.motion-ready .ping-circle { animation: pingPulse 3s ease-out infinite; }
 body.motion-ready .node-aura { animation: auraPulse 2.6s ease-in-out infinite; }
-
-/* gateway, growth-glow + endpoint labels: choreographed reveal after the lines draw.
-   Hidden state is gated behind .motion-ready, so reduced-motion / no-JS keep them visible. */
-body.motion-ready .e3-gateway,
-body.motion-ready .wave-area,
-body.motion-ready .target-node { opacity: 0; }
-body.motion-ready .accelerator-panel.is-visible .e3-gateway { animation: chartFade 0.7s 0.4s var(--ease-out) forwards; }
-body.motion-ready .accelerator-panel.is-visible .wave-area { animation: chartFade 0.9s 1.45s var(--ease-out) forwards; }
-body.motion-ready .accelerator-panel.is-visible .tn1 { animation: chartFade 0.55s 1.55s var(--ease-out) forwards; }
-body.motion-ready .accelerator-panel.is-visible .tn2 { animation: chartFade 0.55s 1.75s var(--ease-out) forwards; }
-body.motion-ready .accelerator-panel.is-visible .tn3 { animation: chartFade 0.55s 1.95s var(--ease-out) forwards; }
-@keyframes chartFade { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes waveDraw { to { stroke-dashoffset: 0; } }
 @keyframes pingPulse {
