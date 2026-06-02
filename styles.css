@@ -156,6 +156,20 @@ em { font-style: italic; }
 
 .content { padding: var(--section-pad) 0; position: relative; }
 
+/* ---------- AMBIENT NETWORK BACKGROUND (dark sections only) ---------- */
+/* isolate creates a stacking context so the canvas paints above the section
+   bg but behind all editorial content, with zero interference. */
+.section-dark.has-net { isolation: isolate; }
+.net-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  display: block;
+}
+
 /* ---------- 4. EDITORIAL PRIMITIVES ---------- */
 .eyebrow {
   display: inline-flex;
@@ -640,7 +654,7 @@ body.motion-ready .pulse-dot::after { animation: pulseRing 2.4s var(--ease-out) 
   font-size: 0.78rem;
   font-style: italic;
   letter-spacing: 0.1em;
-  color: var(--teal);
+  color: var(--accent-2);
 }
 .stat strong {
   font-size: clamp(2.2rem, 1.4rem + 2.6vw, 3.6rem);
@@ -704,6 +718,8 @@ body.motion-ready .ticker-track { animation: marquee 30s linear infinite; }
   padding: clamp(2.5rem, 5vw, 4rem) 0;
   border-top: 1px solid var(--hairline);
 }
+/* Reasons live in their own dark section now; the tone change is the divider, so drop the top hairline */
+.why-reasons .entry { border-top: none; }
 .entry-index {
   display: flex;
   flex-direction: column;
@@ -931,8 +947,8 @@ body.motion-ready .portfolio-track { animation: marquee 44s linear infinite; }
   position: relative;
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3vw, 2.4rem);
-  background: linear-gradient(165deg, #0a1030, var(--navy) 60%, #02040f);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, #141b42, #0c1234 60%, #080d28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: 0 40px 90px rgba(3, 7, 43, 0.3);
   overflow: hidden;
 }
@@ -973,7 +989,7 @@ body.motion-ready .portfolio-track { animation: marquee 44s linear infinite; }
   display: flex;
   justify-content: center;
 }
-.acceleration-chart-svg { width: 100%; max-width: 480px; height: auto; }
+.acceleration-chart-svg { width: 100%; max-width: 520px; height: auto; }
 
 /* chart animations */
 .wave-path { stroke-dasharray: 720; }
@@ -990,6 +1006,18 @@ body.motion-ready .accelerator-panel.is-visible .wave-path-2 { animation: waveDr
 body.motion-ready .accelerator-panel.is-visible .wave-path-3 { animation: waveDraw 1.7s 0.55s var(--ease) forwards; }
 body.motion-ready .ping-circle { animation: pingPulse 3s ease-out infinite; }
 body.motion-ready .node-aura { animation: auraPulse 2.6s ease-in-out infinite; }
+
+/* gateway, growth-glow + endpoint labels: choreographed reveal after the lines draw.
+   Hidden state is gated behind .motion-ready, so reduced-motion / no-JS keep them visible. */
+body.motion-ready .e3-gateway,
+body.motion-ready .wave-area,
+body.motion-ready .target-node { opacity: 0; }
+body.motion-ready .accelerator-panel.is-visible .e3-gateway { animation: chartFade 0.7s 0.4s var(--ease-out) forwards; }
+body.motion-ready .accelerator-panel.is-visible .wave-area { animation: chartFade 0.9s 1.45s var(--ease-out) forwards; }
+body.motion-ready .accelerator-panel.is-visible .tn1 { animation: chartFade 0.55s 1.55s var(--ease-out) forwards; }
+body.motion-ready .accelerator-panel.is-visible .tn2 { animation: chartFade 0.55s 1.75s var(--ease-out) forwards; }
+body.motion-ready .accelerator-panel.is-visible .tn3 { animation: chartFade 0.55s 1.95s var(--ease-out) forwards; }
+@keyframes chartFade { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes waveDraw { to { stroke-dashoffset: 0; } }
 @keyframes pingPulse {

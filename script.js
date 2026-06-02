@@ -601,3 +601,137 @@ if (!prefersReducedMotion.matches) {
   }
   start();
 })();
+
+/* ============================================================
+   AMBIENT NETWORK BACKGROUND
+   A near-still teal constellation that softly breathes in the
+   blank space of the dark sections. Static nodes (no drift) with
+   a gentle per-node twinkle + faint proximity links. Sits behind
+   content (z-index:-1), only animates the section in view, pauses
+   when the tab is hidden, and freezes flat for reduced-motion.
+   ============================================================ */
+(() => {
+  const canvases = Array.from(document.querySelectorAll("canvas.net-bg"));
+  if (!canvases.length) return;
+
+  const TEAL = "59, 214, 198";
+  const reduce = prefersReducedMotion.matches;
+  const nets = [];
+  let lastT = 0;
+
+  const buildNodes = (w, h) => {
+    const dense = w < 768 ? 26000 : 17000;       // sparser on small screens
+    const count = Math.max(8, Math.min(Math.round((w * h) / dense), 72));
+    const nodes = [];
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() < 0.16 ? 2.1 : 1.2,     // a few brighter hub nodes
+        base: 0.16 + Math.random() * 0.28,        // resting alpha
+        amp: 0.08 + Math.random() * 0.15,         // breathe amplitude
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.5 + Math.random() * 0.6
+      });
+    }
+    return nodes;
+  };
+
+  const alphaOf = (n, t) =>
+    reduce ? n.base : Math.max(0, n.base + n.amp * Math.sin(n.phase + t * n.speed));
+
+  const size = (net) => {
+    const rect = net.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    net.w = rect.width;
+    net.h = rect.height;
+    net.canvas.width = Math.round(rect.width * dpr);
+    net.canvas.height = Math.round(rect.height * dpr);
+    net.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    net.nodes = buildNodes(net.w, net.h);
+    net.link = Math.min(Math.max(net.w, net.h) * 0.145, 182);
+  };
+
+  const draw = (net, t) => {
+    const { ctx, w, h, nodes, link } = net;
+    if (!w || !h) return;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      const aA = alphaOf(a, t);
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d >= link) continue;
+        const la = (1 - d / link) * 0.42 * Math.min(aA, alphaOf(b, t));
+        if (la < 0.006) continue;
+        ctx.strokeStyle = `rgba(${TEAL}, ${la})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      ctx.fillStyle = `rgba(${TEAL}, ${Math.min(alphaOf(a, t), 0.6)})`;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+
+  canvases.forEach((canvas) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const net = { canvas, ctx, w: 0, h: 0, nodes: [], link: 0, visible: false };
+    size(net);
+    draw(net, 0);
+    nets.push(net);
+  });
+
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          const net = nets.find((n) => n.canvas === e.target);
+          if (net) net.visible = e.isIntersecting;
+        });
+      },
+      { rootMargin: "120px 0px" }
+    );
+    nets.forEach((n) => io.observe(n.canvas));
+  } else {
+    nets.forEach((n) => (n.visible = true));
+  }
+
+  let resizeRAF = null;
+  window.addEventListener("resize", () => {
+    if (resizeRAF) cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => {
+      nets.forEach((n) => {
+        size(n);
+        draw(n, lastT);
+      });
+    });
+  });
+
+  if (reduce) return; // static field only, no loop
+
+  let last = 0;
+  const loop = (ts) => {
+    requestAnimationFrame(loop);
+    if (document.hidden) return;
+    if (ts - last < 33) return; // ~30fps cap
+    last = ts;
+    lastT = (ts / 1000) * 0.55; // slow, breathing time
+    for (const net of nets) {
+      if (net.visible) draw(net, lastT);
+    }
+  };
+  requestAnimationFrame(loop);
+})();
